@@ -11,12 +11,21 @@ namespace XP_UnitTesting.Repositories
         {
             try
             {
+                // Log blog details before adding
+                Console.WriteLine($"Adding Blog: Title - {blog.Title}, AuthorId - {blog.AuthorId}");
+
                 context.BlogPosts.Add(blog);
                 context.SaveChanges();
+
+                // Log successful addition
+                Console.WriteLine($"Blog Added Successfully: Title - {blog.Title}");
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Log error message during exception
+                Console.WriteLine($"Error adding blog: {ex.Message}");
+
                 return false;
             }
         }
@@ -69,5 +78,10 @@ namespace XP_UnitTesting.Repositories
                 return false;
             }
         }
+        public BlogPost FindById(int id)
+        {
+            return context.BlogPosts.FirstOrDefault(b => b.Id == id);         
+        }
     }
+
 }

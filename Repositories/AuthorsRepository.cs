@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata;
 using XP_UnitTesting.Models;
 
 namespace XP_UnitTesting.Repositories
@@ -11,13 +12,20 @@ namespace XP_UnitTesting.Repositories
         {
             try
             {
+                // Log blog details before adding
+                Console.WriteLine($"Adding Author: Title - {author.Name}, Id - {author.Id}");
+
                 author.DateCreated = DateTime.Now;
                 context.Authors.Add(author);
                 context.SaveChanges();
+                // Log successful addition
+                Console.WriteLine($"Author Added Successfully: Title - {author.Name}");
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Log error message during exception
+                Console.WriteLine($"Error adding Author: {ex.Message}");
                 return false;
             }
         }

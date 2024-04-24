@@ -2,8 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using System.Reflection.Metadata;
 using XP_UnitTesting.Models;
 using XP_UnitTesting.Repositories;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace XP_UnitTesting.UnitTesting
 {
@@ -16,17 +18,14 @@ namespace XP_UnitTesting.UnitTesting
         public void Setup()
         {
             _options = new DbContextOptionsBuilder<BlogsContext>()
-                .UseInMemoryDatabase(databaseName: "test_database")
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-            using var context = new BlogsContext(_options!);
-            context.Database.EnsureDeleted();
-            context.Database.EnsureCreated();
         }
 
         [Test]
         public void GetABlog()
         {
-            // ARRANGE
+            //ARRANGE
             var author = new Author
             {
                 Email = "Jong@gmail.com",
@@ -34,31 +33,39 @@ namespace XP_UnitTesting.UnitTesting
                 DateCreated = DateTime.Now,
             };
 
-            using (var entities = new BlogsContext(_options!))
+            var blog1 = new BlogPost
             {
-                AuthorsRepository authorRepository = new(entities);
-                authorRepository.AddAuthor(author);
+                BlogContent = "Test Content 1",
+                AuthorId = author.Id,
+                Slug = "Test-Slug-1",
+                Title = "Test Title 1",
+            };
 
-                var blog = new BlogPost
-                {
-                    BlogContent = "Test Content",
-                    AuthorId = author.Id,
-                    Slug = "Test-Slug",
-                    Title = "Test Title",
-                };
+            var blog2 = new BlogPost
+            {
+                BlogContent = "Test Content 2",
+                AuthorId = author.Id,
+                Slug = "Test-Slug-2",
+                Title = "Test Title 2",
+            };
 
-                BlogsRepository blogRepository = new(entities);
-                blogRepository.AddBlog(blog);
-                entities.SaveChanges();
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author);
+
+            BlogsRepository blogRepository = new(entities);
+            blogRepository.AddBlog(blog1);
+            blogRepository.AddBlog(blog2);
+            entities.SaveChanges();
 
 
-                // ACT
-                var specificBlog = entities.BlogPosts.FirstOrDefault(b => b.Id == blog.Id);
+            //ACT
+            var specificBlog = blogRepository.FindById(blog2.Id);
 
-                // ASSERT
-                Assert.That(specificBlog, Is.Not.Null);
-                Assert.That(specificBlog.Title, Is.EqualTo("Test Title"));
-            }
+            //ASSERT
+            //FAILING
+            Assert.That(specificBlog, Is.Not.Null);
+            Assert.That(specificBlog.Title, Is.EqualTo("Test Title 2"));
         }
 
         [Test]
@@ -79,112 +86,239 @@ namespace XP_UnitTesting.UnitTesting
                 DateCreated = DateTime.Now,
             };
 
-            var author3 = new Author
+            var blog1 = new BlogPost
             {
-                Email = "author3@example.com",
-                Name = "Author 3",
+                BlogContent = "Test Content 1",
+                AuthorId = author1.Id,
+                Slug = "Test-Slug-1",
+                Title = "Test Title 1",
+            };
+
+            var blog2 = new BlogPost
+            {
+                BlogContent = "Test Content 2",
+                AuthorId = author2.Id,
+                Slug = "Test-Slug-2",
+                Title = "Test Title 2",
+            };
+
+
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author1);
+            authorRepository.AddAuthor(author2);
+
+            BlogsRepository blogRepository = new(entities);
+            blogRepository.AddBlog(blog1);
+            blogRepository.AddBlog(blog2);
+
+            //ACT
+            var blogList = blogRepository.GetBlogs();
+            var authorList = authorRepository.GetAuthors();
+
+            //ASSERT 
+            //@LUIS
+            //For some reason it only sees 1 blog
+            Assert.That(blogList.Count, Is.EqualTo(2));
+            //This one works
+            Assert.That(authorList.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void GetBlogsSpecificAuthor()
+        {
+            // ARRANGE
+            var author1 = new Author
+            {
+                Email = "author1@example.com",
+                Name = "Author 1",
                 DateCreated = DateTime.Now,
+            };
+
+            var author2 = new Author
+            {
+                Email = "author2@example.com",
+                Name = "Author 2",
+                DateCreated = DateTime.Now,
+            };
+
+            var blog1 = new BlogPost
+            {
+                BlogContent = "Test Content 1",
+                AuthorId = author1.Id,
+                Slug = "Test-Slug-1",
+                Title = "Test Title 1",
+            };
+
+            var blog2 = new BlogPost
+            {
+                BlogContent = "Test Content 2",
+                AuthorId = author2.Id,
+                Slug = "Test-Slug-2",
+                Title = "Test Title 2",
+            };
+
+            var blog3 = new BlogPost
+            {
+                BlogContent = "Test Content 3",
+                AuthorId = author2.Id,
+                Slug = "Test-Slug-3",
+                Title = "Test Title 3",
+            };
+
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author1);
+            authorRepository.AddAuthor(author2);
+
+            BlogsRepository blogRepository = new(entities);
+            blogRepository.AddBlog(blog1);
+            blogRepository.AddBlog(blog2);
+
+            //ACT
+            var blogList = blogRepository.GetBlogs();
+            var author2Blogs = blogList.Where(b => b.AuthorId == author2.Id).ToList();
+            //ASSERT
+            //FAILING
+            //Assert.That(blogList.Count, Is.EqualTo(2));
+            Assert.That(author2Blogs.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void AddBlog()
+        {
+            // ARRANGE
+            var author = new Author
+            {
+                Email = "author1@example.com",
+                Name = "Author 1",
+                DateCreated = DateTime.Now,
+            };
+
+            var blog = new BlogPost
+            {
+                Title = "Test Content",
+                BlogContent = "This is a test blog post content.",
+                Slug = "test-blog-post",
+                AuthorId = author.Id
+            };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
+
+            var blogRepository = new BlogsRepository(entities);
+            blogRepository.AddBlog(blog);
+
+            //ACT
+            var addedBlog = blogRepository.FindById(blog.Id);
+
+            //ASSERT
+            Assert.That(blog.Title, Is.EqualTo(addedBlog.Title));
+            Assert.That(blog.BlogContent, Is.EqualTo(addedBlog.BlogContent));
+            Assert.That(blog.Id, Is.EqualTo(addedBlog.Id));
+            Assert.That(blog.Slug, Is.EqualTo(addedBlog.Slug));
+        }
+
+        [Test]
+        public void AddBlogWithoutContent()
+        {
+            //ARRANGE
+            var author = new Author
+            {
+                Email = "author1@example.com",
+                Name = "Author 1",
+                DateCreated = DateTime.Now,
+            };
+
+            var blog = new BlogPost
+            {
+                AuthorId = author.Id,
+                Slug = "Test-Slug-1",
+                Title = "Test Title 1",
             };
 
             using (var entities = new BlogsContext(_options!))
             {
-                //authors
                 AuthorsRepository authorRepository = new(entities);
-                authorRepository.AddAuthor(author1);
-                authorRepository.AddAuthor(author2);
-                authorRepository.AddAuthor(author3);
+                authorRepository.AddAuthor(author);
 
-                var blog1 = new BlogPost
-                {
-                    BlogContent = "Test Content 1",
-                    AuthorId = author1.Id,
-                    Slug = "Test-Slug-1",
-                    Title = "Test Title 1",
-                };
-
-                var blog2 = new BlogPost
-                {
-                    BlogContent = "Test Content 2",
-                    AuthorId = author2.Id,
-                    Slug = "Test-Slug-2",
-                    Title = "Test Title 2",
-                };
-
-                var blog3 = new BlogPost
-                {
-                    BlogContent = "Test Content 3",
-                    AuthorId = author3.Id,
-                    Slug = "Test-Slug-3",
-                    Title = "Test Title 3",
-                };
-
-                //blogs
                 BlogsRepository blogRepository = new(entities);
+                blogRepository.AddBlog(blog);
+
+                //ACT
+                var addedBlog = blogRepository.FindById(blog.Id);
+
+                //ASSERT
+                Assert.That(addedBlog, Is.Null);
+            }
+        }
+
+        [Test]
+        public void AddBlogsSingleAuthor()
+        {
+            // ARRANGE
+            var author = new Author
+            {
+                Email = "author1@example.com",
+                Name = "Author 1",
+                DateCreated = DateTime.Now,
+            };
+
+            var blog1 = new BlogPost
+            {
+                BlogContent = "Test Content 1",
+                AuthorId = author.Id,
+                Slug = "Test-Slug-1",
+                Title = "Test Title 1",
+            };
+
+            var blog2 = new BlogPost
+            {
+                BlogContent = "Test Content 2",
+                AuthorId = author.Id,
+                Slug = "Test-Slug-2",
+                Title = "Test Title 2",
+            };
+
+            var blog3 = new BlogPost
+            {
+                BlogContent = "Test Content 3",
+                AuthorId = author.Id,
+                Slug = "Test-Slug-3",
+                Title = "Test Title 3",
+            };
+
+            using (var entities = new BlogsContext(_options!))
+            {
+                var authorRepository = new AuthorsRepository(entities);
+                authorRepository.AddAuthor(author);
+
+                var blogRepository = new BlogsRepository(entities);
                 blogRepository.AddBlog(blog1);
                 blogRepository.AddBlog(blog2);
                 blogRepository.AddBlog(blog3);
 
                 //ACT
                 var blogList = blogRepository.GetBlogs();
-                var authorList = authorRepository.GetAuthors();
+                var authorBlogs = entities.BlogPosts.Where(b => b.AuthorId == author.Id).ToList();
 
+                //ASSERT
+                //Assert.That(blogList.Count, Is.EqualTo(3));
+                Assert.That(authorBlogs.Count, Is.EqualTo(3));
 
-                //ASSERT 
-                //@LUIS
-                //For some reason it only sees 1 blog
-                Assert.That(blogList.Count, Is.EqualTo(3));
-                //This one works
-                Assert.That(authorList.Count, Is.EqualTo(3));
-            }
-        }
-
-        [Test]
-        public void AddBlog()
-        {
-            //ARRANGE
-            var author = new Author
-            {
-                Email = "test@example.com",
-                Name = "Test Author",
-                DateCreated = DateTime.Now
-            };
-
-            var blog = new BlogPost
-            {
-                Title = "Test Blog Post",
-                BlogContent = "This is a test blog post content.",
-                Slug = "test-blog-post",
-                AuthorId = author.Id
-            };
-
-            using (var entities = new BlogsContext(_options!))
-            {
-                var authorRepo = new AuthorsRepository(entities);
-                authorRepo.AddAuthor(author);
-
-                var blogRepo = new BlogsRepository(entities);
-                // Act
-                blogRepo.AddBlog(blog);
-                entities.SaveChanges();
-
-                // Assert
-                var addedBlog = entities.BlogPosts.FirstOrDefault(b => b.Id == blog.Id);
-                Assert.That(blog.Title, Is.EqualTo(addedBlog.Title));
-                Assert.That(blog.BlogContent, Is.EqualTo(addedBlog.BlogContent));
-                Assert.That(blog.Id, Is.EqualTo(addedBlog.Id));
-                Assert.That(blog.Slug, Is.EqualTo(addedBlog.Slug));
             }
         }
 
         [Test]
         public void RemoveBlog()
         {
-            // Arrange
+            // ARRANGE
             var author = new Author
             {
-                Email = "test@example.com",
-                Name = "Test Author",
-                DateCreated = DateTime.Now
+                Email = "author1@example.com",
+                Name = "Author 1",
+                DateCreated = DateTime.Now,
             };
 
             var blog = new BlogPost
@@ -197,20 +331,125 @@ namespace XP_UnitTesting.UnitTesting
 
             using (var entities = new BlogsContext(_options!))
             {
-                var authorRepo = new AuthorsRepository(entities);
-                authorRepo.AddAuthor(author);
-                var blogRepo = new BlogsRepository(entities);
-                blogRepo.AddBlog(blog);
-                entities.SaveChanges();
+                var authorRepository = new AuthorsRepository(entities);
+                authorRepository.AddAuthor(author);
+
+                var blogRepository = new BlogsRepository(entities);
+                blogRepository.AddBlog(blog);
+                var addedBlog = blogRepository.FindById(blog.Id); ;
+                Assert.That(addedBlog, Is.Not.Null);
 
                 //ACT
-                blogRepo.RemoveBlog(blog.Id);
-                entities.SaveChanges();
+                blogRepository.RemoveBlog(blog.Id);
 
                 //ASSERT
-                var removedBlog = entities.BlogPosts.FirstOrDefault(b => b.Id == blog.Id);
+                var removedBlog = blogRepository.FindById(blog.Id); ;
                 Assert.That(removedBlog, Is.Null);
             }
         }
-    }
+
+        [Test]
+        public void RemoveNonExistingBlog()
+        {
+            // ARRANGE
+            var author = new Author
+            {
+                Email = "author1@example.com",
+                Name = "Author 1",
+                DateCreated = DateTime.Now,
+            };
+
+            var blog = new BlogPost
+            {
+                Title = "Test Blog Post",
+                BlogContent = "This is a test blog post content.",
+                Slug = "test-blog-post",
+                AuthorId = author.Id
+            };
+
+            using (var entities = new BlogsContext(_options!))
+            {
+                var authorRepository = new AuthorsRepository(entities);
+                authorRepository.AddAuthor(author);
+
+                var blogRepository = new BlogsRepository(entities);
+                blogRepository.AddBlog(blog);
+                var addedBlog = blogRepository.FindById(blog.Id); ;
+                Assert.That(addedBlog, Is.Not.Null);
+
+                // ACT
+                var nonExistingBlogId = blog.Id + 1; //Assuming this ID doesn't exist
+                blogRepository.RemoveBlog(nonExistingBlogId);
+
+                // ASSERT
+                var removedBlog = blogRepository.FindById(nonExistingBlogId);
+                Assert.That(removedBlog, Is.Null);
+            }
+        }
+
+        [Test]
+        public void UpdateExistingBlog()
+        {
+            //ARRANGE
+            var author = new Author
+            {
+                Email = "author1@example.com",
+                Name = "Author 1",
+                DateCreated = DateTime.Now,
+            };
+
+            var blog = new BlogPost
+            {
+                Title = "Test Blog Post",
+                BlogContent = "This is a test blog post content.",
+                Slug = "test-blog-post",
+                AuthorId = author.Id
+            };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
+
+            var blogRepository = new BlogsRepository(entities);
+            blogRepository.AddBlog(blog);
+            var addedBlog = blogRepository.FindById(blog.Id);
+            Assert.That(addedBlog, Is.Not.Null);
+
+            //ACT
+            var updatedBlogContent = "Updated content for the test blog post.";
+            blog.BlogContent = updatedBlogContent;
+            blogRepository.UpdateBlog(blog);
+
+            //ASSERT
+            var updatedBlog = blogRepository.FindById(blog.Id);
+            Assert.That(updatedBlog, Is.Not.Null);
+            Assert.That(updatedBlog.BlogContent, Is.EqualTo(updatedBlogContent));
+        }
+
+        [Test]
+        public void UpdateNonExistingBlog()
+        {
+            // ARRANGE
+            var nonExistingBlogId = 50; //Assuming this ID doesn't exist
+
+            using var entities = new BlogsContext(_options!);
+            var blogRepository = new BlogsRepository(entities);
+
+            //ACT
+            var updatedBlogContent = "Updated content for a non-existing blog.";
+            var blog = new BlogPost
+            {
+                Id = nonExistingBlogId,
+                BlogContent = updatedBlogContent,
+                Title = "Non-existing Blog",
+                Slug = "non-existing-blog"
+            };
+            var result = blogRepository.UpdateBlog(blog);
+
+            //ASSERT
+            Assert.That(result, Is.False);
+            var updatedBlog = blogRepository.FindById(nonExistingBlogId);
+            Assert.That(updatedBlog, Is.Null);
+        }
+    }  
 }
