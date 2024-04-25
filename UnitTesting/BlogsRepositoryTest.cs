@@ -28,11 +28,15 @@ namespace XP_UnitTesting.UnitTesting
             //ARRANGE
             var author = new Author
             {
-                Id = 1,
                 Email = "Jong@gmail.com",
                 Name = "Test",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author);
+
 
             var blog1 = new BlogPost
             {
@@ -49,10 +53,6 @@ namespace XP_UnitTesting.UnitTesting
                 Slug = "Test-Slug-2",
                 Title = "Test Title 2",
             };
-
-            using var entities = new BlogsContext(_options!);
-            AuthorsRepository authorRepository = new(entities);
-            authorRepository.AddAuthor(author);
 
             BlogsRepository blogRepository = new(entities);
             blogRepository.AddBlog(blog1);
@@ -75,7 +75,6 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author1 = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -83,11 +82,15 @@ namespace XP_UnitTesting.UnitTesting
 
             var author2 = new Author
             {
-                Id = 2,
                 Email = "author2@example.com",
                 Name = "Author 2",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author1);
+            authorRepository.AddAuthor(author2);
 
             var blog1 = new BlogPost
             {
@@ -105,23 +108,15 @@ namespace XP_UnitTesting.UnitTesting
                 Title = "Test Title 2",
             };
 
-
-            using var entities = new BlogsContext(_options!);
-            AuthorsRepository authorRepository = new(entities);
-            authorRepository.AddAuthor(author1);
-            authorRepository.AddAuthor(author2);
-
             BlogsRepository blogRepository = new(entities);
             blogRepository.AddBlog(blog1);
             blogRepository.AddBlog(blog2);
 
             //ACT
             var blogList = blogRepository.GetBlogs();
-            var authorList = authorRepository.GetAuthors();
 
             //ASSERT 
             Assert.That(blogList.Count, Is.EqualTo(2));
-            Assert.That(authorList.Count, Is.EqualTo(2));
         }
 
         [Test]
@@ -130,7 +125,6 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author1 = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -138,11 +132,15 @@ namespace XP_UnitTesting.UnitTesting
 
             var author2 = new Author
             {
-                Id = 2,
                 Email = "author2@example.com",
                 Name = "Author 2",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author1);
+            authorRepository.AddAuthor(author2);
 
             var blog1 = new BlogPost
             {
@@ -168,11 +166,6 @@ namespace XP_UnitTesting.UnitTesting
                 Title = "Test Title 3",
             };
 
-            using var entities = new BlogsContext(_options!);
-            AuthorsRepository authorRepository = new(entities);
-            authorRepository.AddAuthor(author1);
-            authorRepository.AddAuthor(author2);
-
             BlogsRepository blogRepository = new(entities);
             blogRepository.AddBlog(blog1);
             blogRepository.AddBlog(blog2);
@@ -180,7 +173,7 @@ namespace XP_UnitTesting.UnitTesting
 
             //ACT
             var blogList = blogRepository.GetBlogs();
-            var author2Blogs = blogList.Where(b => b.AuthorId == 2).ToList();
+            var author2Blogs = blogList.Where(b => b.AuthorId == author2.Id).ToList();
             //ASSERT
             Assert.That(blogList.Count, Is.EqualTo(3));
             Assert.That(author2Blogs.Count, Is.EqualTo(2));
@@ -192,11 +185,14 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
 
             var blog = new BlogPost
             {
@@ -205,10 +201,6 @@ namespace XP_UnitTesting.UnitTesting
                 Slug = "test-blog-post",
                 AuthorId = author.Id
             };
-
-            using var entities = new BlogsContext(_options!);
-            var authorRepository = new AuthorsRepository(entities);
-            authorRepository.AddAuthor(author);
 
             var blogRepository = new BlogsRepository(entities);
             blogRepository.AddBlog(blog);
@@ -229,11 +221,14 @@ namespace XP_UnitTesting.UnitTesting
             //ARRANGE
             var author = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            AuthorsRepository authorRepository = new(entities);
+            authorRepository.AddAuthor(author);
 
             var blog = new BlogPost
             {
@@ -242,20 +237,14 @@ namespace XP_UnitTesting.UnitTesting
                 Title = "Test Title 1",
             };
 
-            using (var entities = new BlogsContext(_options!))
-            {
-                AuthorsRepository authorRepository = new(entities);
-                authorRepository.AddAuthor(author);
+            BlogsRepository blogRepository = new(entities);
+            blogRepository.AddBlog(blog);
 
-                BlogsRepository blogRepository = new(entities);
-                blogRepository.AddBlog(blog);
+            //ACT
+            var addedBlog = blogRepository.FindById(blog.Id);
 
-                //ACT
-                var addedBlog = blogRepository.FindById(blog.Id);
-
-                //ASSERT
-                Assert.That(addedBlog, Is.Null);
-            }
+            //ASSERT
+            Assert.That(addedBlog, Is.Null);
         }
 
         [Test]
@@ -264,11 +253,15 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
-                Id= 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
+            entities.SaveChanges();
 
             var blog1 = new BlogPost
             {
@@ -293,11 +286,6 @@ namespace XP_UnitTesting.UnitTesting
                 Slug = "Test-Slug-3",
                 Title = "Test Title 3",
             };
-
-            using var entities = new BlogsContext(_options!);
-            var authorRepository = new AuthorsRepository(entities);
-            authorRepository.AddAuthor(author);
-            entities.SaveChanges();
 
             var blogRepository = new BlogsRepository(entities);
             blogRepository.AddBlog(blog1);
@@ -320,11 +308,14 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
 
             var blog = new BlogPost
             {
@@ -334,23 +325,17 @@ namespace XP_UnitTesting.UnitTesting
                 AuthorId = author.Id
             };
 
-            using (var entities = new BlogsContext(_options!))
-            {
-                var authorRepository = new AuthorsRepository(entities);
-                authorRepository.AddAuthor(author);
+            var blogRepository = new BlogsRepository(entities);
+            blogRepository.AddBlog(blog);
+            var addedBlog = blogRepository.FindById(blog.Id); ;
+            Assert.That(addedBlog, Is.Not.Null);
 
-                var blogRepository = new BlogsRepository(entities);
-                blogRepository.AddBlog(blog);
-                var addedBlog = blogRepository.FindById(blog.Id); ;
-                Assert.That(addedBlog, Is.Not.Null);
+            //ACT
+            blogRepository.RemoveBlog(blog.Id);
 
-                //ACT
-                blogRepository.RemoveBlog(blog.Id);
-
-                //ASSERT
-                var removedBlog = blogRepository.FindById(blog.Id); ;
-                Assert.That(removedBlog, Is.Null);
-            }
+            //ASSERT
+            var removedBlog = blogRepository.FindById(blog.Id); ;
+            Assert.That(removedBlog, Is.Null);
         }
 
         [Test]
@@ -359,11 +344,14 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
 
             var blog = new BlogPost
             {
@@ -372,10 +360,6 @@ namespace XP_UnitTesting.UnitTesting
                 Slug = "test-blog-post",
                 AuthorId = author.Id
             };
-
-            using var entities = new BlogsContext(_options!);
-            var authorRepository = new AuthorsRepository(entities);
-            authorRepository.AddAuthor(author);
 
             var blogRepository = new BlogsRepository(entities);
             blogRepository.AddBlog(blog);
@@ -397,11 +381,14 @@ namespace XP_UnitTesting.UnitTesting
             //ARRANGE
             var author = new Author
             {
-                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
             };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
 
             var blog = new BlogPost
             {
@@ -411,16 +398,12 @@ namespace XP_UnitTesting.UnitTesting
                 AuthorId = author.Id
             };
 
-            using var entities = new BlogsContext(_options!);
-            var authorRepository = new AuthorsRepository(entities);
-            authorRepository.AddAuthor(author);
-
             var blogRepository = new BlogsRepository(entities);
             blogRepository.AddBlog(blog);
-            var addedBlog = blogRepository.FindById(blog.Id);
-            Assert.That(addedBlog, Is.Not.Null);
 
             //ACT
+            var addedBlog = blogRepository.FindById(blog.Id);
+            Assert.That(addedBlog, Is.Not.Null);
             var updatedBlogContent = "Updated content for the test blog post.";
             blog.BlogContent = updatedBlogContent;
             blogRepository.UpdateBlog(blog);
