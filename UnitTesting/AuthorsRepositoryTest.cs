@@ -23,7 +23,6 @@ namespace XP_UnitTesting.UnitTesting
         {
             var author1 = new Author
             {
-                Id = 1,
                 Email = "FHerbert@gmail.com",
                 Name = "Frank Herbert",
                 DateCreated = DateTime.Now,
@@ -31,7 +30,6 @@ namespace XP_UnitTesting.UnitTesting
 
             var author2 = new Author
             {
-                Id = 2,
                 Email = "ASap@gmail.com",
                 Name = "Andrzej Sapkowski",
                 DateCreated = DateTime.Now,
@@ -39,7 +37,6 @@ namespace XP_UnitTesting.UnitTesting
 
             var author3 = new Author
             {
-                Id = 3,
                 Email = "WGibson@gmail.com",
                 Name = "William Gibson",
                 DateCreated = DateTime.Now,
@@ -47,7 +44,6 @@ namespace XP_UnitTesting.UnitTesting
 
             var author4 = new Author
             {
-                Id = 4,
                 Email = "TClancy@gmail.com",
                 Name = "Tom Clancy",
                 DateCreated = DateTime.Now,
