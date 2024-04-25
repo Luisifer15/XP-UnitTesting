@@ -56,6 +56,13 @@ namespace XP_UnitTesting.UnitTesting
                 DateCreated = DateTime.Now,
             };
 
+            AuthorsRepository authorRepository = new(context);
+            authorRepository.AddAuthor(author1);
+            authorRepository.AddAuthor(author2);
+            authorRepository.AddAuthor(author3);
+            authorRepository.AddAuthor(author4);
+            context.SaveChanges();
+
             var blog1 = new BlogPost
             {
                 BlogContent = "Dune Content",
@@ -135,13 +142,6 @@ namespace XP_UnitTesting.UnitTesting
                 Slug = "Jack Ryan",
                 Title = "Rainbow 6",
             };
-
-            AuthorsRepository authorRepository = new(context);
-            authorRepository.AddAuthor(author1);
-            authorRepository.AddAuthor(author2);
-            authorRepository.AddAuthor(author3);
-            authorRepository.AddAuthor(author4);
-            context.SaveChanges();
 
             BlogsRepository blogRepository = new(context);
             blogRepository.AddBlog(blog1);
