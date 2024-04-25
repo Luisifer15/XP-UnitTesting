@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using System.Reflection.Metadata;
 using XP_UnitTesting.Models;
 using XP_UnitTesting.Repositories;
 
@@ -11,11 +12,18 @@ namespace XP_UnitTesting.UnitTesting
     public class AuthorsRepositoryTest : Controller
     {
         private DbContextOptions<BlogsContext>? _options;
-        
+        [SetUp]
+        public void Setup()
+        {
+            _options = new DbContextOptionsBuilder<BlogsContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+        }
         private void InitArrange(BlogsContext context)
         {
-            var author = new Author
+            var author1 = new Author
             {
+                Id = 1,
                 Email = "FHerbert@gmail.com",
                 Name = "Frank Herbert",
                 DateCreated = DateTime.Now,
@@ -23,6 +31,7 @@ namespace XP_UnitTesting.UnitTesting
 
             var author2 = new Author
             {
+                Id = 2,
                 Email = "ASap@gmail.com",
                 Name = "Andrzej Sapkowski",
                 DateCreated = DateTime.Now,
@@ -30,6 +39,7 @@ namespace XP_UnitTesting.UnitTesting
 
             var author3 = new Author
             {
+                Id = 3,
                 Email = "WGibson@gmail.com",
                 Name = "William Gibson",
                 DateCreated = DateTime.Now,
@@ -37,6 +47,7 @@ namespace XP_UnitTesting.UnitTesting
 
             var author4 = new Author
             {
+                Id = 4,
                 Email = "TClancy@gmail.com",
                 Name = "Tom Clancy",
                 DateCreated = DateTime.Now,
@@ -45,7 +56,7 @@ namespace XP_UnitTesting.UnitTesting
             var blog1 = new BlogPost
             {
                 BlogContent = "Dune Content",
-                AuthorId = author.Id,
+                AuthorId = author1.Id,
                 Slug = "Dune",
                 Title = "Dune",
             };
@@ -53,7 +64,7 @@ namespace XP_UnitTesting.UnitTesting
             var blog2 = new BlogPost
             {
                 BlogContent = "Dune Content",
-                AuthorId = author.Id,
+                AuthorId = author1.Id,
                 Slug = "Dune",
                 Title = "Dune Messiah",
             };
@@ -61,7 +72,7 @@ namespace XP_UnitTesting.UnitTesting
             var blog3 = new BlogPost
             {
                 BlogContent = "Dune Content",
-                AuthorId = author.Id,
+                AuthorId = author1.Id,
                 Slug = "Dune",
                 Title = "Children of Dune",
             };
@@ -122,12 +133,12 @@ namespace XP_UnitTesting.UnitTesting
                 Title = "Rainbow 6",
             };
 
-            //using var entities = new BlogsContext(_options!);
             AuthorsRepository authorRepository = new(context);
-            authorRepository.AddAuthor(author);
+            authorRepository.AddAuthor(author1);
             authorRepository.AddAuthor(author2);
             authorRepository.AddAuthor(author3);
-                
+            authorRepository.AddAuthor(author4);
+
             BlogsRepository blogRepository = new(context);
             blogRepository.AddBlog(blog1);
             blogRepository.AddBlog(blog2);
@@ -140,23 +151,238 @@ namespace XP_UnitTesting.UnitTesting
             blogRepository.AddBlog(blog9);
             blogRepository.AddBlog(blog10);
         }
-
-        [SetUp]
-        public void Setup()
-        {
-            _options = new DbContextOptionsBuilder<BlogsContext>()
-                .UseInMemoryDatabase(databaseName: "test_database")
-                .Options;
-        }
-
+        [Test]
         public void GetAllAuthors()
         {
             //ARRANGE
             using var context = new BlogsContext(_options!);
             InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
             //ACT
+            var authorList = authorRepository.GetAuthors();
 
             //ASSERT
+            Assert.That(authorList.Count, Is.EqualTo(4));
         }
+
+        [Test]
+        public void GetSpecificAuthor()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+
+            //ACT
+            var specificAuthor = authorRepository.FindById(1);
+
+            //ASSERT
+            Assert.That(specificAuthor, Is.Not.Null);
+            Assert.That(specificAuthor.Name, Is.EqualTo("Frank Herbert"));
+
+        }
+
+        [Test]
+        public void GetBlogAuthor()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+            BlogsRepository blogRepository = new(context);
+
+            //ACT
+            var specificBlog = blogRepository.FindById(4);
+            var BlogAuthor = authorRepository.FindById(specificBlog.AuthorId);
+
+            //ASSERT
+            Assert.That(BlogAuthor, Is.Not.Null);
+            Assert.That(BlogAuthor.Name, Is.EqualTo("Andrzej Sapkowski"));
+
+
+        }
+
+        [Test]
+        public void AddAuthors()
+        {
+            //ARRANGE
+            var NewAuthor = new Author
+            {
+                Id = 5,
+                Email = "PKD@example.com",
+                Name = "Philip K. Dick",
+                DateCreated = DateTime.Now,
+            };
+
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(NewAuthor);
+
+            //ACT
+            var newAuthor = authorRepository.FindById(NewAuthor.Id);
+
+            //ASSERT
+            Assert.That(NewAuthor.Name, Is.EqualTo(NewAuthor.Name));
+            Assert.That(NewAuthor.Email, Is.EqualTo(NewAuthor.Email));
+            Assert.That(NewAuthor.DateCreated, Is.EqualTo(NewAuthor.DateCreated));
+
+        }
+        [Test]
+        public void AddAuthorWithoutName()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+
+            var EmptyAuthor = new Author
+            {
+                Id = 5,
+                Email = "PKD@gmail.com",
+                DateCreated = DateTime.Now,
+            };
+            authorRepository.AddAuthor(EmptyAuthor);
+
+
+            //ACT
+            var addedAuthor = authorRepository.FindById(EmptyAuthor.Id);
+
+            //ASSERT
+            Assert.That(addedAuthor, Is.Null);
+
+        }
+
+        [Test]
+        public void AddAuthorWithoutEmail()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+
+            var EmptyAuthor = new Author
+            {
+                Id = 5,
+                Name = "Philip K. Dick",
+                DateCreated = DateTime.Now,
+            };
+            authorRepository.AddAuthor(EmptyAuthor);
+
+            //ACT
+            var addedAuthor = authorRepository.FindById(EmptyAuthor.Id);
+
+            //ASSERT
+            Assert.That(addedAuthor, Is.Null);
+
+        }
+        [Test]
+        public void RemoveAuthorWBlog()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+
+            //ACT
+            var removeAuthor = authorRepository.RemoveAuthor(3);
+
+            //ASSERT
+            Assert.That(removeAuthor, Is.False);
+            var removedAuthor = authorRepository.FindById(3);
+            Assert.That(removedAuthor, Is.Not.Null);
+
+        }
+        [Test]
+        public void RemoveAuthorWithoutBlog()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+            var EmptyAuthor = new Author
+            {
+                Id = 5,
+                Email = "PKD@gmail.com",
+                Name = "Philip K. Dick",
+                DateCreated = DateTime.Now,
+            };
+            authorRepository.AddAuthor(EmptyAuthor);
+            var addedAuthor = authorRepository.FindById(EmptyAuthor.Id); ;
+            Assert.That(addedAuthor, Is.Not.Null);
+
+            //ACT
+            authorRepository.RemoveAuthor(5);
+
+            //ASSERT
+            var removedAuthor = authorRepository.FindById(5);
+            Assert.That(removedAuthor, Is.Null);
+
+        }
+        [Test]
+        public void UpdateAuthor()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+
+            //ACT
+            var newEmail = "JackRyan@gmail.com";
+            var authorUpdate = authorRepository.FindById(4);
+            authorUpdate.Email = newEmail;
+            var didAuthorUpdate = authorRepository.UpdateAuthor(authorUpdate);
+
+            //ASSERT
+            Assert.That(didAuthorUpdate, Is.True);
+            var AuthorUpdated = authorRepository.FindById(4);
+            Assert.That(AuthorUpdated, Is.Not.Null);
+            Assert.That(AuthorUpdated.Email, Is.EqualTo(newEmail));
+        }
+        [Test]
+        public void UpdateNonExistingAuthor()
+        {
+            //ARRANGE
+            using var context = new BlogsContext(_options!);
+            InitArrange(context);
+            AuthorsRepository authorRepository = new(context);
+
+            //ACT
+            var NewBlogID = 77;
+            var NewBlogEmail = "PKD@gmail.com";
+            var nonExistantAuthor = new Author
+            {
+                Id = NewBlogID,
+                Email = NewBlogEmail,
+                Name = "Ghost",
+                DateCreated = DateTime.Now,
+            };
+            var didAuthorUpdate = authorRepository.UpdateAuthor(nonExistantAuthor);
+
+            //ASSERT
+            Assert.That(didAuthorUpdate, Is.False);
+            var AuthorUpdated = authorRepository.FindById(NewBlogID);
+            Assert.That(AuthorUpdated, Is.Null);
+        }
+
+
+
     }
 }
+
+//TEMPLATE
+
+
+//[Test]
+//public void TestTitle()
+//{
+//    //ARRANGE
+//    using var context = new BlogsContext(_options!);
+//    InitArrange(context);
+//    AuthorsRepository authorRepository = new(context);
+
+//    //ACT
+//    var authorList = authorRepository.GetAuthors();
+
+//    //ASSERT
+
+//}

@@ -379,7 +379,7 @@ namespace XP_UnitTesting.UnitTesting
 
             var blogRepository = new BlogsRepository(entities);
             blogRepository.AddBlog(blog);
-            var addedBlog = blogRepository.FindById(blog.Id); ;
+            var addedBlog = blogRepository.FindById(blog.Id);
             Assert.That(addedBlog, Is.Not.Null);
 
             // ACT

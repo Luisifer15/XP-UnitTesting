@@ -12,7 +12,7 @@ namespace XP_UnitTesting.Repositories
             try
             {
                 // Log blog details before adding
-                Console.WriteLine($"Adding Blog: Title - {blog.Title}, AuthorId - {blog.AuthorId}");
+                Console.WriteLine($"Adding Blog: Title - {blog.Title}, AuthorId - {blog.AuthorId}, BlogID - {blog.Id}");
 
                 context.BlogPosts.Add(blog);
                 context.SaveChanges();
