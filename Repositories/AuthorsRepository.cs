@@ -13,11 +13,11 @@ namespace XP_UnitTesting.Repositories
             try
             {
                 // Log blog details before adding
-                Console.WriteLine($"Adding Author: Title - {author.Name}, Id - {author.Id}");
-
                 author.DateCreated = DateTime.Now;
                 context.Authors.Add(author);
                 context.SaveChanges();
+                Console.WriteLine($"Adding Author: Title - {author.Name}, Id - {author.Id}");
+
                 // Log successful addition
                 Console.WriteLine($"Author Added Successfully: Title - {author.Name}");
                 return true;
