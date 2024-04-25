@@ -138,6 +138,7 @@ namespace XP_UnitTesting.UnitTesting
             authorRepository.AddAuthor(author2);
             authorRepository.AddAuthor(author3);
             authorRepository.AddAuthor(author4);
+            context.SaveChanges();
 
             BlogsRepository blogRepository = new(context);
             blogRepository.AddBlog(blog1);
@@ -150,6 +151,7 @@ namespace XP_UnitTesting.UnitTesting
             blogRepository.AddBlog(blog8);
             blogRepository.AddBlog(blog9);
             blogRepository.AddBlog(blog10);
+            context.SaveChanges();
         }
         [Test]
         public void GetAllAuthors()
