@@ -28,6 +28,7 @@ namespace XP_UnitTesting.UnitTesting
             //ARRANGE
             var author = new Author
             {
+                Id = 1,
                 Email = "Jong@gmail.com",
                 Name = "Test",
                 DateCreated = DateTime.Now,
@@ -74,6 +75,7 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author1 = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -81,6 +83,7 @@ namespace XP_UnitTesting.UnitTesting
 
             var author2 = new Author
             {
+                Id = 2,
                 Email = "author2@example.com",
                 Name = "Author 2",
                 DateCreated = DateTime.Now,
@@ -117,10 +120,7 @@ namespace XP_UnitTesting.UnitTesting
             var authorList = authorRepository.GetAuthors();
 
             //ASSERT 
-            //@LUIS
-            //For some reason it only sees 1 blog
             Assert.That(blogList.Count, Is.EqualTo(2));
-            //This one works
             Assert.That(authorList.Count, Is.EqualTo(2));
         }
 
@@ -130,6 +130,7 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author1 = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -137,6 +138,7 @@ namespace XP_UnitTesting.UnitTesting
 
             var author2 = new Author
             {
+                Id = 2,
                 Email = "author2@example.com",
                 Name = "Author 2",
                 DateCreated = DateTime.Now,
@@ -174,13 +176,13 @@ namespace XP_UnitTesting.UnitTesting
             BlogsRepository blogRepository = new(entities);
             blogRepository.AddBlog(blog1);
             blogRepository.AddBlog(blog2);
+            blogRepository.AddBlog(blog3);
 
             //ACT
             var blogList = blogRepository.GetBlogs();
-            var author2Blogs = blogList.Where(b => b.AuthorId == author2.Id).ToList();
+            var author2Blogs = blogList.Where(b => b.AuthorId == 2).ToList();
             //ASSERT
-            //FAILING
-            //Assert.That(blogList.Count, Is.EqualTo(2));
+            Assert.That(blogList.Count, Is.EqualTo(3));
             Assert.That(author2Blogs.Count, Is.EqualTo(2));
         }
 
@@ -190,6 +192,7 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -226,6 +229,7 @@ namespace XP_UnitTesting.UnitTesting
             //ARRANGE
             var author = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -260,6 +264,7 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
+                Id= 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -289,25 +294,24 @@ namespace XP_UnitTesting.UnitTesting
                 Title = "Test Title 3",
             };
 
-            using (var entities = new BlogsContext(_options!))
-            {
-                var authorRepository = new AuthorsRepository(entities);
-                authorRepository.AddAuthor(author);
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
+            entities.SaveChanges();
 
-                var blogRepository = new BlogsRepository(entities);
-                blogRepository.AddBlog(blog1);
-                blogRepository.AddBlog(blog2);
-                blogRepository.AddBlog(blog3);
+            var blogRepository = new BlogsRepository(entities);
+            blogRepository.AddBlog(blog1);
+            blogRepository.AddBlog(blog2);
+            blogRepository.AddBlog(blog3);
+            entities.SaveChanges();
 
-                //ACT
-                var blogList = blogRepository.GetBlogs();
-                var authorBlogs = entities.BlogPosts.Where(b => b.AuthorId == author.Id).ToList();
+            //ACT
+            var blogList = blogRepository.GetBlogs();
+            var authorBlogs = entities.BlogPosts.Where(b => b.AuthorId == author.Id).ToList();
 
-                //ASSERT
-                //Assert.That(blogList.Count, Is.EqualTo(3));
-                Assert.That(authorBlogs.Count, Is.EqualTo(3));
-
-            }
+            //ASSERT
+            Assert.That(blogList.Count, Is.EqualTo(3));
+            Assert.That(authorBlogs.Count, Is.EqualTo(3));
         }
 
         [Test]
@@ -316,6 +320,7 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -354,6 +359,7 @@ namespace XP_UnitTesting.UnitTesting
             // ARRANGE
             var author = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
@@ -367,24 +373,22 @@ namespace XP_UnitTesting.UnitTesting
                 AuthorId = author.Id
             };
 
-            using (var entities = new BlogsContext(_options!))
-            {
-                var authorRepository = new AuthorsRepository(entities);
-                authorRepository.AddAuthor(author);
+            using var entities = new BlogsContext(_options!);
+            var authorRepository = new AuthorsRepository(entities);
+            authorRepository.AddAuthor(author);
 
-                var blogRepository = new BlogsRepository(entities);
-                blogRepository.AddBlog(blog);
-                var addedBlog = blogRepository.FindById(blog.Id); ;
-                Assert.That(addedBlog, Is.Not.Null);
+            var blogRepository = new BlogsRepository(entities);
+            blogRepository.AddBlog(blog);
+            var addedBlog = blogRepository.FindById(blog.Id); ;
+            Assert.That(addedBlog, Is.Not.Null);
 
-                // ACT
-                var nonExistingBlogId = blog.Id + 1; //Assuming this ID doesn't exist
-                blogRepository.RemoveBlog(nonExistingBlogId);
+            // ACT
+            var nonExistingBlogId = blog.Id + 1; //Assuming this ID doesn't exist
+            blogRepository.RemoveBlog(nonExistingBlogId);
 
-                // ASSERT
-                var removedBlog = blogRepository.FindById(nonExistingBlogId);
-                Assert.That(removedBlog, Is.Null);
-            }
+            // ASSERT
+            var nonExistingBlog = blogRepository.FindById(nonExistingBlogId);
+            Assert.That(nonExistingBlog, Is.Null);
         }
 
         [Test]
@@ -393,6 +397,7 @@ namespace XP_UnitTesting.UnitTesting
             //ARRANGE
             var author = new Author
             {
+                Id = 1,
                 Email = "author1@example.com",
                 Name = "Author 1",
                 DateCreated = DateTime.Now,
