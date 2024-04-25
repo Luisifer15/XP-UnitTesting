@@ -36,7 +36,6 @@ public partial class BlogsContext : DbContext
         {
             entity.ToTable("BlogPost");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.BlogContent).HasColumnType("text");
             entity.Property(e => e.Slug)
                 .HasMaxLength(50)

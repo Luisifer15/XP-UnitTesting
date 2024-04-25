@@ -8,5 +8,6 @@ namespace XP_UnitTesting.Repositories
         List<BlogPost> GetBlogs();
         bool RemoveBlog(int blogId);
         bool UpdateBlog(BlogPost blog);
+        BlogPost FindById(int id);
     }
 }
