@@ -78,5 +78,10 @@ namespace XP_UnitTesting.Repositories
                 return false;
             }
         }
+
+        public Author FindById(int id)
+        {
+            return context.Authors.FirstOrDefault(b => b.Id == id);
+        }
     }
 }
